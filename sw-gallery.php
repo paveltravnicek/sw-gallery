@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       SW Fotogalerie
+ * Plugin Name:       Fotogalerie
  * Plugin URI:        https://smart-websites.cz/
  * Description:       Designová fotogalerie s kategoriemi, subkategoriemi a vlastním lightboxem. Vkládá se shortcodem [sw_gallery].
  * Version:           1.0
