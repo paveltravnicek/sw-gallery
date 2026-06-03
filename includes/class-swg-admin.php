@@ -126,7 +126,7 @@ class SWG_Admin {
 				<div class="swg-hero-main">
 					<span class="swg-badge">Smart Websites</span>
 					<h1 class="swg-hero-title">Fotogalerie</h1>
-					<p class="swg-hero-sub">Kategorie, subkategorie a fotky z knihovny médií. Na web vložíš shortcodem <code>[sw_gallery]</code>.</p>
+					<p class="swg-hero-sub">Kategorie, subkategorie a fotky z knihovny médií. Na web vložíte shortcodem <code>[sw_gallery]</code>.</p>
 				</div>
 				<div class="swg-hero-version">
 					<span class="swg-hero-version-num"><?php echo esc_html( SWG_VERSION ); ?></span>
@@ -180,8 +180,8 @@ class SWG_Admin {
 
 				<div class="swg-help">
 					<h2>Jak na vložení</h2>
-					<p>Celou galerii (všechny kategorie) vložíš shortcodem <code>[sw_gallery]</code>.</p>
-					<p>Jen jednu kategorii vložíš pomocí jejího slugu, např. <code>[sw_gallery category="exterieery"]</code>.</p>
+					<p>Celou galerii (všechny kategorie) vložíte shortcodem <code>[sw_gallery]</code>.</p>
+					<p>Jen jednu kategorii vložíte pomocí jejího slugu, např. <code>[sw_gallery category="exterieery"]</code>.</p>
 				</div>
 
 			</div>
