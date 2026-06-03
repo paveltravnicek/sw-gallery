@@ -1,0 +1,355 @@
+/* ============================================================
+   SW Fotogalerie – frontend
+   ============================================================ */
+
+.swg {
+	--swg-gold: #b89968;
+	--swg-gold-soft: rgba(184, 153, 104, 0.5);
+	--swg-row-h: 260px;
+	--swg-gap: 12px;
+	--swg-radius: 14px;
+	--swg-ink: inherit;
+	--swg-muted: rgba(128, 128, 128, 0.85);
+	--swg-line: rgba(128, 128, 128, 0.22);
+	--swg-surface: rgba(128, 128, 128, 0.06);
+	position: relative;
+}
+
+/* ---------- Taby kategorií ---------- */
+
+.swg-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1.75rem;
+	justify-content: center;
+	margin-bottom: 2.25rem;
+	border-bottom: 1px solid var(--swg-line);
+}
+
+.swg-tab {
+	appearance: none;
+	background: none;
+	border: 0;
+	padding: 0.65rem 0.25rem 1rem;
+	margin-bottom: -1px;
+	font-size: 1.05rem;
+	font-weight: 500;
+	color: var(--swg-muted);
+	cursor: pointer;
+	position: relative;
+	transition: color 0.2s ease;
+}
+
+.swg-tab::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--swg-gold);
+	transform: scaleX(0);
+	transition: transform 0.25s ease;
+}
+
+.swg-tab:hover { color: var(--swg-ink); }
+
+.swg-tab.is-active {
+	color: var(--swg-ink);
+}
+.swg-tab.is-active::after { transform: scaleX(1); }
+
+/* ---------- Přepínání kategorií ---------- */
+
+.swg-cat { display: none; }
+.swg-cat.is-active { display: block; }
+
+/* ---------- Rozcestník subkategorií ---------- */
+
+.swg-subs {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.85rem;
+	margin-bottom: 2.5rem;
+}
+
+.swg-sub-card {
+	appearance: none;
+	cursor: pointer;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.15rem;
+	min-width: 150px;
+	padding: 0.85rem 1.5rem;
+	text-align: center;
+	background: var(--swg-surface);
+	border: 1px solid var(--swg-line);
+	border-radius: var(--swg-radius);
+	color: var(--swg-ink);
+	transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+}
+
+.swg-sub-card:hover {
+	transform: translateY(-2px);
+	border-color: var(--swg-gold-soft);
+}
+
+.swg-sub-card-title {
+	font-size: 1.02rem;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.swg-sub-card-count {
+	font-size: 0.82rem;
+	color: var(--swg-muted);
+}
+
+/* Aktivní subkategorie */
+.swg-sub-card.is-active {
+	border-color: var(--swg-gold);
+	background: rgba(184, 153, 104, 0.1);
+}
+.swg-sub-card.is-active .swg-sub-card-title { color: var(--swg-gold); }
+
+/* ---------- Panel + justified mřížka ---------- */
+
+.swg-panel { display: none; }
+.swg-panel.is-active { display: block; }
+
+.swg-panel-title {
+	text-align: center;
+	margin: 0 0 1.5rem;
+}
+
+.swg-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--swg-gap);
+}
+
+.swg-item {
+	position: relative;
+	height: var(--swg-row-h);
+	margin: 0;
+	border-radius: var(--swg-radius);
+	overflow: hidden;
+	cursor: pointer;
+	background: var(--swg-surface);
+	/* flex-grow a flex-basis nastavuje PHP inline podle poměru stran */
+}
+
+.swg-item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform 0.5s ease;
+}
+
+.swg-item:hover img { transform: scale(1.05); }
+
+.swg-item-cap {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 1.5rem 0.85rem 0.7rem;
+	font-size: 0.82rem;
+	color: #fff;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+	opacity: 0;
+	transform: translateY(6px);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+	pointer-events: none;
+}
+
+.swg-item:hover .swg-item-cap {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.swg-item-zoom {
+	position: absolute;
+	top: 0.7rem;
+	right: 0.7rem;
+	width: 38px;
+	height: 38px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.45);
+	color: #fff;
+	opacity: 0;
+	transform: scale(0.85);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.swg-item:hover .swg-item-zoom {
+	opacity: 1;
+	transform: scale(1);
+}
+
+/* ---------- Lightbox ---------- */
+
+html.swg-lb-open { overflow: hidden; }
+
+.swg-lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 99999;
+	display: flex;
+	flex-direction: column;
+	background: rgba(10, 12, 14, 0.94);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.swg-lightbox[aria-hidden="false"] {
+	opacity: 1;
+	visibility: visible;
+}
+
+.swg-lb-stage {
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 3.5rem 4.5rem 1rem;
+	min-height: 0;
+}
+
+.swg-lb-img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	border-radius: 6px;
+	opacity: 0;
+	transform: scale(0.98);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.swg-lb-img.is-loaded {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.swg-lb-bar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0 1.5rem 1.4rem;
+	color: rgba(255, 255, 255, 0.85);
+	font-size: 0.9rem;
+}
+
+.swg-lb-caption { line-height: 1.4; }
+.swg-lb-counter {
+	white-space: nowrap;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.swg-lb-close,
+.swg-lb-nav {
+	position: absolute;
+	appearance: none;
+	border: 0;
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.swg-lb-close {
+	top: 1rem;
+	right: 1.2rem;
+	width: 46px;
+	height: 46px;
+	border-radius: 50%;
+	font-size: 1.8rem;
+	line-height: 1;
+}
+
+.swg-lb-nav {
+	top: 50%;
+	transform: translateY(-50%);
+	width: 54px;
+	height: 54px;
+	border-radius: 50%;
+	font-size: 2rem;
+	line-height: 1;
+}
+
+.swg-lb-prev { left: 1.2rem; }
+.swg-lb-next { right: 1.2rem; }
+
+.swg-lb-close:hover { background: rgba(255, 255, 255, 0.2); }
+.swg-lb-nav:hover { background: rgba(255, 255, 255, 0.2); }
+.swg-lb-prev:hover { transform: translateY(-50%) translateX(-3px); }
+.swg-lb-next:hover { transform: translateY(-50%) translateX(3px); }
+
+/* ---------- Hláška pro adminy ---------- */
+
+.swg-empty-admin {
+	padding: 1rem 1.25rem;
+	border: 1px dashed var(--swg-gold, #b89968);
+	border-radius: 10px;
+	color: #8a6d3b;
+	background: rgba(184, 153, 104, 0.08);
+}
+
+/* ---------- Dark mode (web s [data-bs-theme=dark]) ---------- */
+
+[data-bs-theme="dark"] .swg {
+	--swg-line: rgba(255, 255, 255, 0.16);
+	--swg-surface: rgba(255, 255, 255, 0.05);
+	--swg-muted: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- Responsivita ---------- */
+
+@media (max-width: 991.98px) {
+	.swg { --swg-row-h: 220px; }
+}
+
+@media (max-width: 575.98px) {
+	.swg {
+		--swg-row-h: 180px;
+		--swg-gap: 8px;
+	}
+	.swg-subs {
+		gap: 0.6rem;
+	}
+	.swg-sub-card {
+		min-width: 0;
+		flex: 1 1 auto;
+		padding: 0.7rem 1rem;
+	}
+	.swg-sub-card-title { font-size: 0.95rem; }
+	.swg-lb-stage { padding: 3rem 0.75rem 0.75rem; }
+	.swg-lb-nav { width: 44px; height: 44px; font-size: 1.6rem; }
+	.swg-lb-prev { left: 0.5rem; }
+	.swg-lb-next { right: 0.5rem; }
+}
+
+/* ---------- Respekt k prefers-reduced-motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+	.swg-sub-card,
+	.swg-item img,
+	.swg-lb-img {
+		transition: none;
+	}
+}
