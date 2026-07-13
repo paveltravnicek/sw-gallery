@@ -18,17 +18,39 @@ if ( ! defined( 'ABSPATH' ) ) {
  *        ],
  *      ],
  *   ],
+ *   'settings' => [
+ *      'color' => '#7D95A6' | '' (prázdné = fallback na výchozí barvu z frontend.css),
+ *   ],
  * ]
  */
 class SWG_Data {
 
-	/** Vrátí celou strukturu (vždy s klíčem 'categories'). */
+	/** Vrátí celou strukturu (vždy s klíči 'categories' a 'settings'). */
 	public static function get() {
 		$data = get_option( SWG_OPTION, array() );
-		if ( ! is_array( $data ) || ! isset( $data['categories'] ) || ! is_array( $data['categories'] ) ) {
-			$data = array( 'categories' => array() );
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
+		if ( ! isset( $data['categories'] ) || ! is_array( $data['categories'] ) ) {
+			$data['categories'] = array();
+		}
+		if ( ! isset( $data['settings'] ) || ! is_array( $data['settings'] ) ) {
+			$data['settings'] = array();
+		}
+		// DŮLEŽITÉ: chybějící/neplatná barva vždy spadne na '' (= žádný override).
+		// Díky tomu update pluginu ze starší verze, kde tato volba ještě neexistovala,
+		// nijak nerozhodí barevnost, kterou má instalace aktuálně nastavenou v CSS.
+		if ( ! isset( $data['settings']['color'] ) || ! is_string( $data['settings']['color'] ) ) {
+			$data['settings']['color'] = '';
 		}
 		return $data;
+	}
+
+	/** Vrátí platnou hex barvu z nastavení, nebo '' pokud není nastavená (= použít výchozí z CSS). */
+	public static function get_color() {
+		$data  = self::get();
+		$color = sanitize_hex_color( $data['settings']['color'] );
+		return $color ? $color : '';
 	}
 
 	/** Uloží už zsanitovanou strukturu. */
@@ -169,7 +191,29 @@ class SWG_Data {
 	/** Při aktivaci nic nepředvyplňujeme, jen zajistíme existenci option. */
 	public static function maybe_seed() {
 		if ( false === get_option( SWG_OPTION, false ) ) {
-			add_option( SWG_OPTION, array( 'categories' => array() ) );
+			add_option( SWG_OPTION, array( 'categories' => array(), 'settings' => array( 'color' => '' ) ) );
 		}
+	}
+
+	/**
+	 * Převede hex barvu (#rgb nebo #rrggbb) na řetězec "r, g, b" pro použití v rgba().
+	 * Vrací '' při neplatném vstupu.
+	 */
+	public static function hex_to_rgb_triplet( $hex ) {
+		$hex = sanitize_hex_color( (string) $hex );
+		if ( ! $hex ) {
+			return '';
+		}
+		$hex = ltrim( $hex, '#' );
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+		if ( 6 !== strlen( $hex ) ) {
+			return '';
+		}
+		$r = hexdec( substr( $hex, 0, 2 ) );
+		$g = hexdec( substr( $hex, 2, 2 ) );
+		$b = hexdec( substr( $hex, 4, 2 ) );
+		return $r . ', ' . $g . ', ' . $b;
 	}
 }

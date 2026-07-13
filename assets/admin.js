@@ -28,6 +28,55 @@
 		return thumbs[id] || '';
 	}
 
+	/* ---------- Slug / shortcode náhled ---------- */
+
+	var SLUG_MAP = {
+		á: 'a', ä: 'a', č: 'c', ď: 'd', é: 'e', ě: 'e', í: 'i', ľ: 'l', ň: 'n',
+		ó: 'o', ô: 'o', ř: 'r', š: 's', ť: 't', ú: 'u', ů: 'u', ü: 'u', ý: 'y', ž: 'z',
+		Á: 'a', Ä: 'a', Č: 'c', Ď: 'd', É: 'e', Ě: 'e', Í: 'i', Ľ: 'l', Ň: 'n',
+		Ó: 'o', Ô: 'o', Ř: 'r', Š: 's', Ť: 't', Ú: 'u', Ů: 'u', Ü: 'u', Ý: 'y', Ž: 'z'
+	};
+
+	function slugify(text) {
+		var s = String(text || '').replace(/[áäčďéěíľňóôřšťúůüýžÁÄČĎÉĚÍĽŇÓÔŘŠŤÚŮÜÝŽ]/g, function (ch) {
+			return SLUG_MAP[ch] || ch;
+		});
+		s = s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+		return s || 'kategorie';
+	}
+
+	function catShortcode(title) {
+		return '[sw_gallery category="' + slugify(title) + '"]';
+	}
+
+	/* ---------- Kopírování do schránky ---------- */
+
+	function copyText(text, $btn) {
+		function done(ok) {
+			var original = $btn.attr('title');
+			$btn.addClass(ok ? 'is-copied' : 'is-copy-error');
+			$btn.attr('title', ok ? 'Zkopírováno!' : 'Nepodařilo se zkopírovat');
+			setTimeout(function () {
+				$btn.removeClass('is-copied is-copy-error');
+				$btn.attr('title', original);
+			}, 1500);
+		}
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+			return;
+		}
+		try {
+			var $tmp = $('<textarea readonly></textarea>').val(text).css({ position: 'fixed', top: '-1000px', left: '-1000px' });
+			$('body').append($tmp);
+			$tmp[0].select();
+			document.execCommand('copy');
+			$tmp.remove();
+			done(true);
+		} catch (e) {
+			done(false);
+		}
+	}
+
 	/* ---------- Render ---------- */
 
 	function render() {
@@ -54,7 +103,8 @@
 	}
 
 	function lockEditor() {
-		$editor.find('input, textarea, button').prop('disabled', true);
+		// Tlačítko kopírování shortcode je jen ke čtení, i v read-only režimu má zůstat funkční.
+		$editor.find('input, textarea, button').not('.swg-cat-sc-copy').prop('disabled', true);
 	}
 
 	function renderCategory(cat) {
@@ -68,11 +118,17 @@
 						'<button type="button" class="button swg-icon-btn swg-del-cat" title="Smazat kategorii"><span class="dashicons dashicons-trash"></span></button>' +
 					'</div>' +
 				'</div>' +
+				'<div class="swg-cat-sc-row">' +
+					'<span class="swg-cat-sc-label">Shortcode:</span>' +
+					'<code class="swg-cat-sc-code"></code>' +
+					'<button type="button" class="button swg-icon-btn swg-cat-sc-copy" title="Kopírovat shortcode"><span class="dashicons dashicons-admin-page"></span></button>' +
+				'</div>' +
 				'<div class="swg-subs-list"></div>' +
 			'</div>'
 		);
 
 		$cat.find('.swg-cat-title').val(cat.title);
+		$cat.find('.swg-cat-sc-code').text(catShortcode(cat.title));
 
 		var $list = $cat.find('.swg-subs-list');
 		(cat.subcategories || []).forEach(function (sub) {
@@ -257,6 +313,18 @@
 	// Title edits.
 	$editor.on('input', '.swg-cat-title, .swg-sub-title', sync);
 
+	// Live náhled shortcode při psaní názvu kategorie.
+	$editor.on('input', '.swg-cat-title', function () {
+		var $card = $(this).closest('.swg-cat-card');
+		$card.find('.swg-cat-sc-code').text(catShortcode($(this).val()));
+	});
+
+	// Kopírování shortcode kategorie.
+	$editor.on('click', '.swg-cat-sc-copy', function () {
+		var text = $(this).closest('.swg-cat-card').find('.swg-cat-sc-code').text();
+		copyText(text, $(this));
+	});
+
 	// Media picker.
 	var frame = null;
 	var $activeSub = null;
@@ -319,5 +387,55 @@
 
 	/* ---------- Init ---------- */
 	render();
+
+	/* ---------- Barva přepínačů ---------- */
+	(function () {
+		var $enabled = $('#swg-color-enabled');
+		var $color = $('#swg-color-field');
+		var $hex = $('#swg-color-hex');
+		var HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+		if (!$enabled.length || !$color.length) {
+			return;
+		}
+
+		function normalizeHex(v) {
+			v = String(v || '').trim();
+			if (v && v[0] !== '#') { v = '#' + v; }
+			if (/^#[0-9a-fA-F]{3}$/.test(v)) {
+				v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+			}
+			return v;
+		}
+
+		function refreshState() {
+			var on = !readonly && $enabled.is(':checked');
+			$color.prop('disabled', !on);
+			$hex.prop('disabled', !on);
+		}
+
+		// Výběr z palety -> promítne se do textového pole.
+		$color.on('input change', function () {
+			$hex.val(($color.val() || '').toUpperCase());
+		});
+
+		// Ruční zápis HEX kódu -> jakmile je platný, promítne se do palety.
+		$hex.on('input', function () {
+			var v = normalizeHex($hex.val());
+			if (HEX_RE.test(v)) {
+				$color.val(v.toLowerCase()).trigger('change');
+			}
+		});
+
+		// Při odchodu z pole zneplatněný zápis vrátí zpět na poslední platnou barvu.
+		$hex.on('blur', function () {
+			var v = normalizeHex($hex.val());
+			$hex.val(HEX_RE.test(v) ? v.toUpperCase() : ($color.val() || '').toUpperCase());
+		});
+
+		$enabled.on('change', refreshState);
+
+		refreshState();
+	})();
 
 })(jQuery);

@@ -194,6 +194,77 @@
 }
 .swg-wrap .swg-icon-btn:hover { color: #b32d2e; border-color: #b32d2e; }
 
+/* ---------- Karta: barevnost přepínačů ---------- */
+
+.swg-card--color {
+	padding: 1.6rem 1.8rem;
+	margin-bottom: 1.5rem;
+}
+
+.swg-color-row {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-top: 1.1rem;
+}
+
+.swg-color-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-weight: 600;
+	color: #1d2327;
+	cursor: pointer;
+}
+.swg-color-toggle input[type="checkbox"] { margin: 0; }
+
+.swg-wrap input[type="color"]#swg-color-field {
+	width: 52px;
+	height: 40px;
+	padding: 3px;
+	border: 1px solid #d7d8db;
+	border-radius: 10px;
+	background: #fff;
+	cursor: pointer;
+}
+.swg-wrap input[type="color"]#swg-color-field:disabled {
+	cursor: default;
+	opacity: 0.55;
+}
+
+.swg-color-hex {
+	font-family: Consolas, Monaco, monospace;
+	font-size: 0.88rem;
+	color: #50575e;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.swg-wrap input.swg-color-hex-input {
+	width: 110px;
+	height: 40px;
+	padding: 0 0.7rem;
+	border: 1px solid #d7d8db;
+	border-radius: 10px;
+	background: #fff;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 0.88rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #1d2327;
+	box-shadow: none;
+}
+.swg-wrap input.swg-color-hex-input:focus {
+	border-color: var(--swg-blue);
+	box-shadow: 0 0 0 1px var(--swg-blue);
+	outline: none;
+}
+.swg-wrap input.swg-color-hex-input:disabled {
+	background: #f6f7f9;
+	color: #a7aaae;
+}
+
 /* ---------- Editor / karty ---------- */
 
 .swg-editor {
@@ -246,6 +317,58 @@
 	border-color: var(--swg-blue);
 	box-shadow: 0 0 0 1px var(--swg-blue);
 	outline: none;
+}
+
+.swg-cat-sc-row {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.75rem 1.4rem 1rem;
+	flex-wrap: wrap;
+}
+
+.swg-cat-sc-label {
+	font-size: 0.8rem;
+	color: #787c82;
+	white-space: nowrap;
+}
+
+.swg-cat-sc-code {
+	font-family: Consolas, Monaco, monospace;
+	font-size: 0.82rem;
+	padding: 0.3rem 0.6rem;
+	background: #f0f0f1;
+	border-radius: 7px;
+	color: #1d2327;
+	word-break: break-all;
+}
+
+.swg-wrap .swg-cat-sc-copy {
+	width: 32px;
+	height: 32px;
+	min-height: 32px;
+	padding: 0;
+	border-radius: 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+.swg-wrap .swg-cat-sc-copy .dashicons {
+	font-size: 16px;
+	width: auto;
+	height: auto;
+	line-height: 1;
+}
+.swg-wrap .swg-cat-sc-copy.is-copied {
+	background: #e6f6ee;
+	border-color: #1d7a52;
+	color: #1d7a52;
+}
+.swg-wrap .swg-cat-sc-copy.is-copy-error {
+	background: #fdecec;
+	border-color: #b32d2e;
+	color: #b32d2e;
 }
 
 .swg-cat-actions,

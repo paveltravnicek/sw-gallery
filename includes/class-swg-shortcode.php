@@ -24,6 +24,31 @@ class SWG_Shortcode {
 	public function register_assets() {
 		wp_register_style( 'swg-frontend', SWG_URL . 'assets/frontend.css', array(), SWG_VERSION );
 		wp_register_script( 'swg-frontend', SWG_URL . 'assets/frontend.js', array(), SWG_VERSION, true );
+
+		$this->maybe_inline_color_css();
+	}
+
+	/**
+	 * Pokud má instalace v nastavení zvolenou vlastní barvu, odvodí z ní další
+	 * používané odstíny (hover, jemné pozadí aktivní karty) a přidá je jako
+	 * inline CSS proměnné za frontend.css – tím přepíší výchozí barvu z pluginu.
+	 *
+	 * Pokud barva nastavená není (nová instalace bez volby, nebo update ze
+	 * starší verze pluginu, kde tato volba ještě neexistovala), nic se nepřidává
+	 * a použije se barva natvrdo zapsaná ve frontend.css – stávající vzhled
+	 * webu se tedy aktualizací pluginu nijak nerozhodí.
+	 */
+	private function maybe_inline_color_css() {
+		$color = SWG_Data::get_color();
+		if ( '' === $color ) {
+			return;
+		}
+		$rgb = SWG_Data::hex_to_rgb_triplet( $color );
+		if ( '' === $rgb ) {
+			return;
+		}
+		$css = '.swg{--swg-gold:' . $color . ';--swg-gold-soft:rgba(' . $rgb . ', 0.5);--swg-gold-tint:rgba(' . $rgb . ', 0.1);--swg-gold-tint-soft:rgba(' . $rgb . ', 0.05);--swg-gold-muted:rgba(' . $rgb . ', 0.62);}';
+		wp_add_inline_style( 'swg-frontend', $css );
 	}
 
 	private function enqueue() {

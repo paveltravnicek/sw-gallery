@@ -99,6 +99,12 @@ class SWG_Admin {
 		$raw  = json_decode( $json, true );
 
 		$clean = SWG_Data::sanitize( is_array( $raw ) ? $raw : array() );
+
+		$color_enabled = ! empty( $_POST['swg_color_enabled'] );
+		$color_raw     = isset( $_POST['swg_color'] ) ? sanitize_text_field( wp_unslash( $_POST['swg_color'] ) ) : '';
+		$color         = $color_enabled ? sanitize_hex_color( $color_raw ) : '';
+		$clean['settings'] = array( 'color' => $color ? $color : '' );
+
 		SWG_Data::save( $clean );
 
 		$redirect = add_query_arg(
@@ -118,6 +124,10 @@ class SWG_Admin {
 		$lic_message  = isset( $_GET['swg_license_message'] ) ? sanitize_text_field( wp_unslash( $_GET['swg_license_message'] ) ) : '';
 		$licence      = SWG_Licence::instance();
 		$operational  = $licence->is_operational();
+
+		$data          = SWG_Data::get();
+		$color         = $data['settings']['color'];
+		$color_enabled = ( '' !== $color );
 		?>
 		<div class="wrap swg-wrap">
 
@@ -157,6 +167,24 @@ class SWG_Admin {
 					<?php wp_nonce_field( 'swg_save', 'swg_nonce' ); ?>
 					<input type="hidden" name="swg_data" id="swg-data-json" value="">
 
+					<div class="swg-card swg-card--color">
+						<div class="swg-card-head">
+							<div class="swg-card-head-text">
+								<h2>Barevnost přepínačů</h2>
+								<p class="swg-card-sub">Vyberte jednu barvu – plugin si z ní odvodí i další odstíny použité u karet subkategorií a záložek kategorií.</p>
+							</div>
+						</div>
+						<div class="swg-color-row">
+							<label class="swg-color-toggle">
+								<input type="checkbox" name="swg_color_enabled" id="swg-color-enabled" value="1" <?php checked( $color_enabled ); ?> <?php disabled( ! $operational ); ?>>
+								<span>Použít vlastní barvu</span>
+							</label>
+							<input type="color" name="swg_color" id="swg-color-field" value="<?php echo esc_attr( $color ? $color : '#5F7585' ); ?>" <?php disabled( ! $operational || ! $color_enabled ); ?>>
+							<input type="text" id="swg-color-hex" class="swg-color-hex-input" value="<?php echo esc_attr( strtoupper( $color ? $color : '#5F7585' ) ); ?>" maxlength="7" placeholder="#5F7585" autocomplete="off" spellcheck="false" <?php disabled( ! $operational || ! $color_enabled ); ?>>
+						</div>
+						<p class="description">Barvu vyberte z palety, nebo vedle ní rovnou zadejte vlastní HEX kód. Pokud volbu nezapnete (nebo ji vypnete), zůstane zachovaná stávající barva definovaná v CSS pluginu – to platí i po aktualizaci pluginu na novou verzi.</p>
+					</div>
+
 					<?php if ( $operational ) : ?>
 						<div class="swg-toolbar">
 							<div class="swg-toolbar-left">
@@ -181,7 +209,8 @@ class SWG_Admin {
 				<div class="swg-help">
 					<h2>Jak na vložení</h2>
 					<p>Celou galerii (všechny kategorie) vložíte shortcodem <code>[sw_gallery]</code>.</p>
-					<p>Jen jednu kategorii vložíte pomocí jejího slugu, např. <code>[sw_gallery category="exterieery"]</code>.</p>
+					<p>Jen jednu kategorii vložíte pomocí jejího shortcode – najdete ho přímo u dané kategorie výše, včetně tlačítka pro rychlé zkopírování.</p>
+					<p>V klasickém editoru příspěvku můžete galerii vložit i tlačítkem <strong>Fotogalerie</strong> vedle „Přidat médium“.</p>
 				</div>
 
 			</div>

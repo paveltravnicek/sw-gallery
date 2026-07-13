@@ -3,15 +3,18 @@
    ============================================================ */
 
 .swg {
-	--swg-gold: #b89968;
-	--swg-gold-soft: rgba(184, 153, 104, 0.5);
+	--swg-gold: #5F7585;
+	--swg-gold-soft: rgba(125, 149, 166, 0.5);
+	--swg-gold-tint: rgba(125, 149, 166, 0.1);
+	--swg-gold-tint-soft: rgba(125, 149, 166, 0.05);
+	--swg-gold-muted: rgba(125, 149, 166, 0.62);
 	--swg-row-h: 260px;
 	--swg-gap: 12px;
 	--swg-radius: 14px;
 	--swg-ink: inherit;
-	--swg-muted: rgba(128, 128, 128, 0.85);
-	--swg-line: rgba(128, 128, 128, 0.22);
-	--swg-surface: rgba(128, 128, 128, 0.06);
+	--swg-muted: #6B7378;
+	--swg-line: #E4E9ED;
+	--swg-surface: #F5F7F9;
 	position: relative;
 }
 
@@ -85,7 +88,7 @@
 	min-width: 150px;
 	padding: 0.85rem 1.5rem;
 	text-align: center;
-	background: var(--swg-surface);
+	background: var(--swg-gold-tint-soft, rgba(125, 149, 166, 0.05));
 	border: 1px solid var(--swg-line);
 	border-radius: var(--swg-radius);
 	color: var(--swg-ink);
@@ -101,6 +104,8 @@
 	font-size: 1.02rem;
 	font-weight: 600;
 	line-height: 1.2;
+	color: var(--swg-gold-muted, rgba(125, 149, 166, 0.62));
+	transition: color 0.25s ease;
 }
 
 .swg-sub-card-count {
@@ -111,9 +116,12 @@
 /* Aktivní subkategorie */
 .swg-sub-card.is-active {
 	border-color: var(--swg-gold);
-	background: rgba(184, 153, 104, 0.1);
+	background: var(--swg-gold-tint, rgba(125, 149, 166, 0.1));
 }
-.swg-sub-card.is-active .swg-sub-card-title { color: var(--swg-gold); }
+.swg-sub-card.is-active .swg-sub-card-title {
+	color: var(--swg-gold);
+	font-weight: 700;
+}
 
 /* ---------- Panel + justified mřížka ---------- */
 
@@ -182,7 +190,7 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: 50%;
-	background: rgba(0, 0, 0, 0.45);
+	background: rgba(30, 35, 39, 0.45);
 	color: #fff;
 	opacity: 0;
 	transform: scale(0.85);
@@ -204,7 +212,7 @@ html.swg-lb-open { overflow: hidden; }
 	z-index: 99999;
 	display: flex;
 	flex-direction: column;
-	background: rgba(10, 12, 14, 0.94);
+	background: rgba(30, 35, 39, 0.95);
 	opacity: 0;
 	visibility: hidden;
 	transition: opacity 0.25s ease, visibility 0.25s ease;
@@ -304,10 +312,10 @@ html.swg-lb-open { overflow: hidden; }
 
 .swg-empty-admin {
 	padding: 1rem 1.25rem;
-	border: 1px dashed var(--swg-gold, #b89968);
+	border: 1px dashed var(--swg-gold, #5F7585);
 	border-radius: 10px;
-	color: #8a6d3b;
-	background: rgba(184, 153, 104, 0.08);
+	color: #5F7585;
+	background: rgba(125, 149, 166, 0.08);
 }
 
 /* ---------- Dark mode (web s [data-bs-theme=dark]) ---------- */
