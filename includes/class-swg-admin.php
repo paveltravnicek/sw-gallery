@@ -25,7 +25,7 @@ class SWG_Admin {
 		$this->hook_suffix = add_menu_page(
 			'Fotogalerie',
 			'Fotogalerie',
-			'manage_options',
+			SWG_CAP,
 			'sw-gallery',
 			array( $this, 'render_page' ),
 			'dashicons-format-gallery',
@@ -77,7 +77,7 @@ class SWG_Admin {
 	}
 
 	public function handle_save() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( SWG_CAP ) ) {
 			wp_die( 'Nedostatečná oprávnění.' );
 		}
 		check_admin_referer( 'swg_save', 'swg_nonce' );

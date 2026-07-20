@@ -138,7 +138,7 @@ class SWG_Licence {
 		if ( '' === $l['key'] ) {
 			return;
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( SWG_CAP ) ) {
 			return;
 		}
 		if ( ! empty( $_POST['license_key'] ) ) {
@@ -238,7 +238,7 @@ class SWG_Licence {
 	/* ---------- Admin akce (samostatná licence) ---------- */
 
 	public function handle_verify() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( SWG_CAP ) ) {
 			wp_die( 'Zakázáno.', 'Zakázáno', array( 'response' => 403 ) );
 		}
 		check_admin_referer( 'swg_verify_license' );
@@ -250,7 +250,7 @@ class SWG_Licence {
 	}
 
 	public function handle_remove() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( SWG_CAP ) ) {
 			wp_die( 'Zakázáno.', 'Zakázáno', array( 'response' => 403 ) );
 		}
 		check_admin_referer( 'swg_remove_license' );
