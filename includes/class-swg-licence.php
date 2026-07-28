@@ -17,7 +17,7 @@ class SWG_Licence {
 
 	const OPTION      = 'sw_gallery_license';
 	const CRON_HOOK   = 'sw_gallery_license_daily_check';
-	const HUB_BASE    = 'https://smart-websites.cz';
+	const HUB_BASE    = 'https://agent.smart-websites.cz';
 	const PLUGIN_SLUG = 'sw-gallery';
 
 	private static $instance = null;
@@ -178,7 +178,7 @@ class SWG_Licence {
 		);
 
 		$res = wp_remote_post(
-			rtrim( self::HUB_BASE, '/' ) . '/wp-json/swlic/v2/plugin-license',
+			rtrim( self::HUB_BASE, '/' ) . '/index.php?api=swlic/v2/plugin-license',
 			array(
 				'timeout' => 20,
 				'headers' => array( 'Content-Type' => 'application/json' ),
