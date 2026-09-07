@@ -43,6 +43,18 @@
 	transition: color 0.2s ease;
 }
 
+/* Neaktivní podtržítko – ve výchozím stavu průhledné (= vzhled do verze 1.3). */
+.swg-tab::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--swg-tab-line-idle, transparent);
+}
+
+/* Aktivní podtržítko – vyjíždí přes neaktivní. */
 .swg-tab::after {
 	content: "";
 	position: absolute;
@@ -50,7 +62,7 @@
 	right: 0;
 	bottom: 0;
 	height: 2px;
-	background: var(--swg-gold);
+	background: var(--swg-tab-line, var(--swg-gold));
 	transform: scaleX(0);
 	transition: transform 0.25s ease;
 }
@@ -88,39 +100,53 @@
 	min-width: 150px;
 	padding: 0.85rem 1.5rem;
 	text-align: center;
-	background: var(--swg-gold-tint-soft, rgba(125, 149, 166, 0.05));
-	border: 1px solid var(--swg-line);
+	background: var(--swg-btn-bg, var(--swg-gold-tint-soft, rgba(125, 149, 166, 0.05)));
+	border: 1px solid var(--swg-btn-bd, var(--swg-line));
 	border-radius: var(--swg-radius);
 	color: var(--swg-ink);
-	transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+	transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease, color 0.25s ease;
 }
 
 .swg-sub-card:hover {
 	transform: translateY(-2px);
-	border-color: var(--swg-gold-soft);
+	background: var(--swg-btn-bg-hover, var(--swg-btn-bg, var(--swg-gold-tint-soft, rgba(125, 149, 166, 0.05))));
+	border-color: var(--swg-btn-bd-hover, var(--swg-gold-soft));
+}
+
+.swg-sub-card:focus-visible {
+	outline: 2px solid var(--swg-btn-bd-on, var(--swg-gold));
+	outline-offset: 2px;
 }
 
 .swg-sub-card-title {
 	font-size: 1.02rem;
 	font-weight: 600;
 	line-height: 1.2;
-	color: var(--swg-gold-muted, rgba(125, 149, 166, 0.62));
+	color: var(--swg-btn-fg, var(--swg-gold-muted, rgba(125, 149, 166, 0.62)));
 	transition: color 0.25s ease;
 }
 
 .swg-sub-card-count {
 	font-size: 0.82rem;
-	color: var(--swg-muted);
+	color: var(--swg-btn-sub, var(--swg-muted));
+	transition: color 0.25s ease;
 }
 
 /* Aktivní subkategorie */
 .swg-sub-card.is-active {
-	border-color: var(--swg-gold);
-	background: var(--swg-gold-tint, rgba(125, 149, 166, 0.1));
+	border-color: var(--swg-btn-bd-on, var(--swg-gold));
+	background: var(--swg-btn-bg-on, var(--swg-gold-tint, rgba(125, 149, 166, 0.1)));
+}
+.swg-sub-card.is-active:hover {
+	border-color: var(--swg-btn-bd-on, var(--swg-gold));
+	background: var(--swg-btn-bg-on, var(--swg-gold-tint, rgba(125, 149, 166, 0.1)));
 }
 .swg-sub-card.is-active .swg-sub-card-title {
-	color: var(--swg-gold);
+	color: var(--swg-btn-fg-on, var(--swg-gold));
 	font-weight: 700;
+}
+.swg-sub-card.is-active .swg-sub-card-count {
+	color: var(--swg-btn-sub-on, var(--swg-muted));
 }
 
 /* ---------- Panel + justified mřížka ---------- */

@@ -194,19 +194,19 @@
 }
 .swg-wrap .swg-icon-btn:hover { color: #b32d2e; border-color: #b32d2e; }
 
-/* ---------- Karta: barevnost přepínačů ---------- */
+/* ---------- Karta: barevnost galerie ---------- */
 
 .swg-card--color {
 	padding: 1.6rem 1.8rem;
 	margin-bottom: 1.5rem;
 }
 
-.swg-color-row {
+.swg-card--color .swg-card-head {
 	display: flex;
-	align-items: center;
-	gap: 1rem;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1.5rem;
 	flex-wrap: wrap;
-	margin-top: 1.1rem;
 }
 
 .swg-color-toggle {
@@ -216,54 +216,234 @@
 	font-weight: 600;
 	color: #1d2327;
 	cursor: pointer;
+	white-space: nowrap;
 }
 .swg-color-toggle input[type="checkbox"] { margin: 0; }
 
-.swg-wrap input[type="color"]#swg-color-field {
-	width: 52px;
-	height: 40px;
+.swg-color-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+	gap: 1.75rem;
+	margin-top: 1.4rem;
+}
+
+@media (max-width: 1100px) {
+	.swg-color-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Vypnutá customizace – ovládání zůstane vidět, ale ustoupí do pozadí. */
+.swg-card--color.is-off .swg-color-layout {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+/* ---------- Barevné pole ---------- */
+
+.swg-cf-label {
+	display: block;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: #50575e;
+	margin-bottom: 0.4rem;
+}
+
+.swg-cf-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+	gap: 0.9rem 1.1rem;
+	margin-bottom: 1.2rem;
+}
+
+.swg-cf-row {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.swg-wrap input[type="color"].swg-cf-swatch {
+	width: 46px;
+	height: 38px;
+	flex: 0 0 auto;
 	padding: 3px;
 	border: 1px solid #d7d8db;
 	border-radius: 10px;
 	background: #fff;
 	cursor: pointer;
 }
-.swg-wrap input[type="color"]#swg-color-field:disabled {
+.swg-wrap input[type="color"].swg-cf-swatch:disabled {
 	cursor: default;
 	opacity: 0.55;
 }
 
-.swg-color-hex {
-	font-family: Consolas, Monaco, monospace;
-	font-size: 0.88rem;
-	color: #50575e;
-	letter-spacing: 0.02em;
-	text-transform: uppercase;
+/* Vzorník v automatickém režimu má čárkovaný rámeček – je vidět, že hodnota není ruční. */
+.swg-cf.is-auto input[type="color"].swg-cf-swatch {
+	border-style: dashed;
+	border-color: #b5bcc4;
 }
 
-.swg-wrap input.swg-color-hex-input {
-	width: 110px;
-	height: 40px;
-	padding: 0 0.7rem;
+.swg-wrap input[type="text"].swg-cf-hex {
+	width: 100%;
+	min-width: 0;
+	height: 38px;
+	padding: 0 0.6rem;
 	border: 1px solid #d7d8db;
 	border-radius: 10px;
 	background: #fff;
 	font-family: Consolas, Monaco, monospace;
-	font-size: 0.88rem;
+	font-size: 0.85rem;
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 	color: #1d2327;
 	box-shadow: none;
 }
-.swg-wrap input.swg-color-hex-input:focus {
+.swg-wrap input[type="text"].swg-cf-hex:focus {
 	border-color: var(--swg-blue);
 	box-shadow: 0 0 0 1px var(--swg-blue);
 	outline: none;
 }
-.swg-wrap input.swg-color-hex-input:disabled {
+.swg-wrap input[type="text"].swg-cf-hex:disabled {
 	background: #f6f7f9;
 	color: #a7aaae;
 }
+
+.swg-wrap .swg-cf-reset {
+	flex: 0 0 auto;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	color: #8c9196;
+	font-size: 17px;
+	line-height: 1;
+	cursor: pointer;
+}
+.swg-wrap .swg-cf-reset:hover {
+	border-color: #d7d8db;
+	color: #1d2327;
+}
+.swg-cf.is-auto .swg-cf-reset { visibility: hidden; }
+
+/* ---------- Výběr stylu přepínačů ---------- */
+
+.swg-style-picker { margin-bottom: 1.2rem; }
+
+.swg-style-opts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 0.7rem;
+}
+
+.swg-style-opt {
+	position: relative;
+	display: block;
+	padding: 0.85rem 0.95rem 0.9rem;
+	border: 1px solid #dcdfe3;
+	border-radius: 14px;
+	background: #fff;
+	cursor: pointer;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.swg-style-opt:hover { border-color: #b5bcc4; }
+.swg-style-opt.is-on {
+	border-color: var(--swg-blue);
+	box-shadow: 0 0 0 1px var(--swg-blue);
+}
+/* Radio je schované, focus proto ukazujeme na celé kartě. */
+.swg-style-opt:focus-within {
+	border-color: var(--swg-blue);
+	box-shadow: 0 0 0 2px var(--swg-blue);
+}
+.swg-style-opt input { position: absolute; opacity: 0; pointer-events: none; }
+
+.swg-style-opt-demo {
+	display: flex;
+	gap: 0.35rem;
+	margin-bottom: 0.55rem;
+}
+.swg-style-chip {
+	display: block;
+	width: 34px;
+	height: 20px;
+	border: 1px solid #dcdfe3;
+	border-radius: 7px;
+	background: #f6f7f9;
+}
+
+.swg-style-opt-name {
+	display: block;
+	font-weight: 600;
+	font-size: 0.92rem;
+	color: #1d2327;
+}
+.swg-style-opt-desc {
+	display: block;
+	margin-top: 0.15rem;
+	font-size: 0.8rem;
+	line-height: 1.35;
+	color: #6b7378;
+}
+
+/* ---------- Pokročilé ---------- */
+
+.swg-advanced {
+	border: 1px solid #e4e7ea;
+	border-radius: 14px;
+	padding: 0 1.1rem;
+	background: #fbfcfd;
+}
+.swg-advanced > summary {
+	padding: 0.85rem 0;
+	font-weight: 600;
+	color: #1d2327;
+	cursor: pointer;
+	list-style: revert;
+}
+.swg-advanced[open] > summary { border-bottom: 1px solid #e4e7ea; margin-bottom: 1rem; }
+.swg-advanced-hint { margin-top: 0 !important; }
+
+.swg-advanced-title {
+	margin: 1.1rem 0 0.6rem;
+	font-size: 0.88rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #8c9196;
+}
+
+.swg-advanced-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	padding-bottom: 1.1rem;
+	margin-bottom: 0;
+}
+
+/* ---------- Živý náhled ---------- */
+
+.swg-preview-stage {
+	padding: 1.5rem 1.25rem 1.25rem;
+	border: 1px solid #e4e7ea;
+	border-radius: 16px;
+	background: #fff;
+	overflow: hidden;
+}
+
+/* Náhled používá frontend.css, jen mu srovnáme prostředí adminu. */
+.swg-preview-stage .swg { --swg-ink: #1d2327; }
+.swg-preview-stage .swg-tabs { margin-bottom: 1.5rem; gap: 0.25rem 1.25rem; }
+.swg-preview-stage .swg-subs { margin-bottom: 0; }
+.swg-preview-stage .swg-tab,
+.swg-preview-stage .swg-sub-card {
+	box-shadow: none;
+	text-shadow: none;
+	font-family: inherit;
+	line-height: 1.4;
+}
+.swg-preview-stage .swg-sub-card { min-width: 0; flex: 1 1 130px; }
+.swg-preview-stage .swg-tab:focus,
+.swg-preview-stage .swg-sub-card:focus { outline: none; }
 
 /* ---------- Editor / karty ---------- */
 

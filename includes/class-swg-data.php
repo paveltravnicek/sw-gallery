@@ -19,9 +19,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  *      ],
  *   ],
  *   'settings' => [
- *      'color' => '#7D95A6' | '' (prázdné = fallback na výchozí barvu z frontend.css),
+ *      'color'     => '#7D95A6' | '' (prázdné = fallback na výchozí barvu z frontend.css),
+ *      'color2'    => '#... ' | '' (prázdné = odvodit z 'color'),
+ *      'btn_style' => 'soft' | 'outline' | 'solid',
+ *      'ovr'       => [ 'tab_on' => '', 'tab_off' => '', 'bg' => '', ... ] (prázdné = automatika),
  *   ],
  * ]
+ *
+ * Klíč 'color' zůstává nosný: dokud je prázdný, neposílá se na frontend žádný
+ * override a galerie vypadá přesně jako v CSS pluginu. Instalace ze starších
+ * verzí (kde ostatní klíče neexistovaly) se tím pádem aktualizací nerozhodí.
  */
 class SWG_Data {
 
@@ -37,20 +44,51 @@ class SWG_Data {
 		if ( ! isset( $data['settings'] ) || ! is_array( $data['settings'] ) ) {
 			$data['settings'] = array();
 		}
-		// DŮLEŽITÉ: chybějící/neplatná barva vždy spadne na '' (= žádný override).
-		// Díky tomu update pluginu ze starší verze, kde tato volba ještě neexistovala,
-		// nijak nerozhodí barevnost, kterou má instalace aktuálně nastavenou v CSS.
-		if ( ! isset( $data['settings']['color'] ) || ! is_string( $data['settings']['color'] ) ) {
-			$data['settings']['color'] = '';
-		}
+		$data['settings'] = self::normalize_settings( $data['settings'] );
 		return $data;
+	}
+
+	/**
+	 * Doplní chybějící klíče nastavení na bezpečné výchozí hodnoty.
+	 *
+	 * DŮLEŽITÉ: chybějící/neplatná barva vždy spadne na '' (= žádný override).
+	 * Díky tomu update pluginu ze starší verze, kde tyto volby ještě neexistovaly,
+	 * nijak nerozhodí barevnost, kterou má instalace aktuálně nastavenou v CSS.
+	 */
+	public static function normalize_settings( $settings ) {
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+
+		$out = array(
+			'color'     => isset( $settings['color'] ) ? SWG_Color::hex( $settings['color'] ) : '',
+			'color2'    => isset( $settings['color2'] ) ? SWG_Color::hex( $settings['color2'] ) : '',
+			'btn_style' => 'soft',
+			'ovr'       => array(),
+		);
+
+		if ( isset( $settings['btn_style'] ) && in_array( $settings['btn_style'], SWG_Color::STYLES, true ) ) {
+			$out['btn_style'] = $settings['btn_style'];
+		}
+
+		$ovr = ( isset( $settings['ovr'] ) && is_array( $settings['ovr'] ) ) ? $settings['ovr'] : array();
+		foreach ( SWG_Color::SLOTS as $slot ) {
+			$out['ovr'][ $slot ] = isset( $ovr[ $slot ] ) ? SWG_Color::hex( $ovr[ $slot ] ) : '';
+		}
+
+		return $out;
+	}
+
+	/** Vrátí celé zsanitované nastavení barev. */
+	public static function get_settings() {
+		$data = self::get();
+		return $data['settings'];
 	}
 
 	/** Vrátí platnou hex barvu z nastavení, nebo '' pokud není nastavená (= použít výchozí z CSS). */
 	public static function get_color() {
-		$data  = self::get();
-		$color = sanitize_hex_color( $data['settings']['color'] );
-		return $color ? $color : '';
+		$settings = self::get_settings();
+		return $settings['color'];
 	}
 
 	/** Uloží už zsanitovanou strukturu. */
@@ -191,7 +229,13 @@ class SWG_Data {
 	/** Při aktivaci nic nepředvyplňujeme, jen zajistíme existenci option. */
 	public static function maybe_seed() {
 		if ( false === get_option( SWG_OPTION, false ) ) {
-			add_option( SWG_OPTION, array( 'categories' => array(), 'settings' => array( 'color' => '' ) ) );
+			add_option(
+				SWG_OPTION,
+				array(
+					'categories' => array(),
+					'settings'   => self::normalize_settings( array() ),
+				)
+			);
 		}
 	}
 
