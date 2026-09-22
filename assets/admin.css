@@ -499,6 +499,49 @@
 	outline: none;
 }
 
+/* ---------- Sbalené kategorie (v1.5) ---------- */
+
+.swg-cat-head { cursor: pointer; }
+.swg-cat-head input,
+.swg-cat-head button { cursor: auto; }
+.swg-cat-head button { cursor: pointer; }
+
+.swg-cat-card.is-collapsed .swg-cat-head { border-bottom-color: transparent; }
+.swg-cat-card.is-collapsed .swg-cat-body { display: none; }
+
+.swg-cat-meta {
+	flex: 0 0 auto;
+	font-size: 0.82rem;
+	color: #787c82;
+	white-space: nowrap;
+}
+
+.swg-wrap .swg-cat-toggle .dashicons { transition: transform 0.2s ease; }
+.swg-wrap .swg-cat-toggle[aria-expanded="true"] .dashicons { transform: rotate(180deg); }
+/* Obecné .swg-icon-btn má červený hover pro koš – rozbalovátko ho mít nesmí. */
+.swg-wrap .swg-icon-btn.swg-cat-toggle:hover {
+	color: var(--swg-blue);
+	border-color: var(--swg-blue);
+}
+
+.swg-toolbar-right {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.swg-wrap .button.swg-btn-ghost {
+	background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.swg-wrap .swg-cat-toggle .dashicons { transition: none; }
+}
+
+@media (max-width: 782px) {
+	.swg-cat-meta { order: 3; flex-basis: 100%; padding-left: 2rem; }
+}
+
 .swg-cat-sc-row {
 	display: flex;
 	align-items: center;

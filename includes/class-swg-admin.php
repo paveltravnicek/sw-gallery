@@ -3,10 +3,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Administrace pluginu – tři podstránky pod jednou položkou menu:
+ *   sw-gallery           Správa fotogalerií (kategorie, subkategorie, fotky)
+ *   sw-gallery-settings  Nastavení (barevnost + živý náhled)
+ *   sw-gallery-licence   Licence
+ *
+ * Hlavní slug zůstává 'sw-gallery', takže staré odkazy a záložky dál vedou
+ * na správu galerií.
+ */
 class SWG_Admin {
 
+	const PAGE_GALLERY  = 'sw-gallery';
+	const PAGE_SETTINGS = 'sw-gallery-settings';
+	const PAGE_LICENCE  = 'sw-gallery-licence';
+
 	private static $instance = null;
-	private $hook_suffix = '';
+
+	/** hook_suffix => slug podstránky */
+	private $hooks = array();
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -18,32 +33,63 @@ class SWG_Admin {
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_post_swg_save', array( $this, 'handle_save' ) );
+		add_action( 'admin_post_swg_save_settings', array( $this, 'handle_save_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 	}
 
+	/** URL podstránky pluginu. */
+	public static function page_url( $page, $args = array() ) {
+		return add_query_arg( array_merge( array( 'page' => $page ), $args ), admin_url( 'admin.php' ) );
+	}
+
 	public function menu() {
-		$this->hook_suffix = add_menu_page(
+		$top = add_menu_page(
 			'Fotogalerie',
 			'Fotogalerie',
 			SWG_CAP,
-			'sw-gallery',
-			array( $this, 'render_page' ),
+			self::PAGE_GALLERY,
+			array( $this, 'render_gallery_page' ),
 			'dashicons-format-gallery',
 			26
+		);
+
+		// První podpoložka má stejný slug jako hlavní menu – WP ji tím přejmenuje
+		// z „Fotogalerie" na „Správa fotogalerií" a nevznikne duplicitní odkaz.
+		$gallery = add_submenu_page( self::PAGE_GALLERY, 'Správa fotogalerií', 'Správa fotogalerií', SWG_CAP, self::PAGE_GALLERY, array( $this, 'render_gallery_page' ) );
+		$settings = add_submenu_page( self::PAGE_GALLERY, 'Nastavení fotogalerie', 'Nastavení', SWG_CAP_ADMIN, self::PAGE_SETTINGS, array( $this, 'render_settings_page' ) );
+		$licence  = add_submenu_page( self::PAGE_GALLERY, 'Licence fotogalerie', 'Licence', SWG_CAP_ADMIN, self::PAGE_LICENCE, array( $this, 'render_licence_page' ) );
+
+		$this->hooks = array(
+			$top      => self::PAGE_GALLERY,
+			$gallery  => self::PAGE_GALLERY,
+			$settings => self::PAGE_SETTINGS,
+			$licence  => self::PAGE_LICENCE,
 		);
 	}
 
 	public function assets( $hook ) {
-		if ( $hook !== $this->hook_suffix ) {
+		if ( ! isset( $this->hooks[ $hook ] ) ) {
 			return;
 		}
+		$page = $this->hooks[ $hook ];
 
-		wp_enqueue_media();
+		$deps = array();
+		if ( self::PAGE_SETTINGS === $page ) {
+			// frontend.css jen pro živý náhled v Nastavení. Nesmí se načítat na správě
+			// galerií: editor používá stejné názvy tříd (.swg-sub-card) a frontendové
+			// styly by mu rozbily rozložení.
+			wp_enqueue_style( 'swg-frontend', SWG_URL . 'assets/frontend.css', array(), SWG_VERSION );
+			$deps[] = 'swg-frontend';
+		}
+		wp_enqueue_style( 'swg-admin', SWG_URL . 'assets/admin.css', $deps, SWG_VERSION );
 
-		// Frontend CSS načítáme i v adminu kvůli živému náhledu – náhled tak používá
-		// přesně stejná pravidla jako web a nemůže se rozejít s realitou.
-		wp_enqueue_style( 'swg-frontend', SWG_URL . 'assets/frontend.css', array(), SWG_VERSION );
-		wp_enqueue_style( 'swg-admin', SWG_URL . 'assets/admin.css', array( 'swg-frontend' ), SWG_VERSION );
+		if ( self::PAGE_LICENCE === $page ) {
+			return; // licence žádné JS nepotřebuje
+		}
+
+		if ( self::PAGE_GALLERY === $page ) {
+			wp_enqueue_media();
+		}
 
 		wp_enqueue_script(
 			'swg-admin',
@@ -54,68 +100,77 @@ class SWG_Admin {
 		);
 
 		$data = SWG_Data::get();
-		$ids  = SWG_Data::collect_ids( $data );
+		$ids  = ( self::PAGE_GALLERY === $page ) ? SWG_Data::collect_ids( $data ) : array();
 
 		wp_localize_script(
 			'swg-admin',
 			'SWG',
 			array(
-				'data'     => $data,
+				'data'     => array( 'categories' => $data['categories'] ),
 				'thumbs'   => SWG_Data::thumb_map( $ids ),
 				'readonly' => ! SWG_Licence::instance()->is_operational(),
-				'slots'    => SWG_Color::SLOTS,
-				'i18n'   => array(
-					'selectPhotos'    => 'Vybrat fotky',
-					'addToGallery'    => 'Přidat do galerie',
-					'newCategory'     => 'Název kategorie',
-					'newSubcategory'  => 'Název subkategorie',
-					'confirmCat'      => 'Smazat kategorii včetně subkategorií?',
-					'confirmSub'      => 'Smazat subkategorii?',
-					'emptyPhotos'     => 'Zatím žádné fotky. Přidej je tlačítkem výše.',
-					'photo'           => 'fotka',
-					'photos2'         => 'fotky',
-					'photos5'         => 'fotek',
+				'i18n'     => array(
+					'selectPhotos'   => 'Vybrat fotky',
+					'addToGallery'   => 'Přidat do galerie',
+					'newCategory'    => 'Název kategorie',
+					'newSubcategory' => 'Název subkategorie',
+					'confirmCat'     => 'Smazat kategorii včetně subkategorií?',
+					'confirmSub'     => 'Smazat subkategorii?',
+					'emptyPhotos'    => 'Zatím žádné fotky. Přidej je tlačítkem výše.',
+					'emptySubs'      => 'Zatím žádná subkategorie.',
+					'photo'          => 'fotka',
+					'photos2'        => 'fotky',
+					'photos5'        => 'fotek',
+					'expand'         => 'Rozbalit',
+					'collapse'       => 'Sbalit',
 				),
 			)
 		);
 	}
 
-	public function handle_save() {
-		if ( ! current_user_can( SWG_CAP ) ) {
+	/* ---------- Ukládání ---------- */
+
+	/** Společné kontroly obou formulářů. Vrací false, pokud se nemá ukládat. */
+	private function guard_save( $nonce_action, $page, $cap ) {
+		if ( ! current_user_can( $cap ) ) {
 			wp_die( 'Nedostatečná oprávnění.' );
 		}
-		check_admin_referer( 'swg_save', 'swg_nonce' );
+		check_admin_referer( $nonce_action, 'swg_nonce' );
 
 		// Read-only při neplatné licenci – uložení odmítneme.
 		if ( ! SWG_Licence::instance()->is_operational() ) {
-			$redirect = add_query_arg(
-				array(
-					'page'       => 'sw-gallery',
-					'swg_notice' => 'readonly',
-				),
-				admin_url( 'admin.php' )
-			);
-			wp_safe_redirect( $redirect );
+			wp_safe_redirect( self::page_url( $page, array( 'swg_notice' => 'readonly' ) ) );
 			exit;
 		}
+		return true;
+	}
+
+	/** Správa galerií – ukládá jen kategorie. Nastavení barev nechává být. */
+	public function handle_save() {
+		$this->guard_save( 'swg_save', self::PAGE_GALLERY, SWG_CAP );
 
 		$json = isset( $_POST['swg_data'] ) ? wp_unslash( $_POST['swg_data'] ) : '';
 		$raw  = json_decode( $json, true );
 
-		$clean = SWG_Data::sanitize( is_array( $raw ) ? $raw : array() );
-
-		$clean['settings'] = $this->collect_settings();
+		$current = SWG_Data::get();
+		$clean   = SWG_Data::sanitize( is_array( $raw ) ? $raw : array() );
+		$clean['settings'] = $current['settings'];
 
 		SWG_Data::save( $clean );
 
-		$redirect = add_query_arg(
-			array(
-				'page'       => 'sw-gallery',
-				'swg_notice' => 'saved',
-			),
-			admin_url( 'admin.php' )
-		);
-		wp_safe_redirect( $redirect );
+		wp_safe_redirect( self::page_url( self::PAGE_GALLERY, array( 'swg_notice' => 'saved' ) ) );
+		exit;
+	}
+
+	/** Nastavení – ukládá jen barevnost. Kategorie nechává být. */
+	public function handle_save_settings() {
+		$this->guard_save( 'swg_save_settings', self::PAGE_SETTINGS, SWG_CAP_ADMIN );
+
+		$data             = SWG_Data::get();
+		$data['settings'] = $this->collect_settings();
+		SWG_Data::save( $data );
+
+		wp_safe_redirect( self::page_url( self::PAGE_SETTINGS, array( 'swg_notice' => 'saved' ) ) );
 		exit;
 	}
 
@@ -189,18 +244,9 @@ class SWG_Admin {
 		<?php
 	}
 
-	public function render_page() {
-		$saved        = ( isset( $_GET['swg_notice'] ) && 'saved' === $_GET['swg_notice'] );
-		$readonly_msg = ( isset( $_GET['swg_notice'] ) && 'readonly' === $_GET['swg_notice'] );
-		$lic_message  = isset( $_GET['swg_license_message'] ) ? sanitize_text_field( wp_unslash( $_GET['swg_license_message'] ) ) : '';
-		$licence      = SWG_Licence::instance();
-		$operational  = $licence->is_operational();
+	/* ---------- Společné části stránek ---------- */
 
-		$data          = SWG_Data::get();
-		$st            = $data['settings'];
-		$color         = $st['color'];
-		$color_enabled = ( '' !== $color );
-		$disabled      = ( ! $operational );
+	private function open_page() {
 		?>
 		<div class="wrap swg-wrap">
 
@@ -218,27 +264,114 @@ class SWG_Admin {
 			</div>
 
 			<div class="swg-inner">
+		<?php
+		$this->render_notices();
+	}
 
-				<?php if ( '' !== $lic_message ) : ?>
-					<div class="swg-inline-notice swg-inline-notice--ok"><?php echo esc_html( $lic_message ); ?></div>
-				<?php endif; ?>
+	private function close_page() {
+		?>
+			</div>
+		</div>
+		<?php
+	}
 
-				<?php if ( $saved ) : ?>
-					<div class="swg-inline-notice swg-inline-notice--ok">Změny byly uloženy.</div>
-				<?php endif; ?>
+	private function render_notices() {
+		$notice = isset( $_GET['swg_notice'] ) ? sanitize_key( wp_unslash( $_GET['swg_notice'] ) ) : '';
+		$lic    = isset( $_GET['swg_license_message'] ) ? sanitize_text_field( wp_unslash( $_GET['swg_license_message'] ) ) : '';
 
-				<?php $licence->render_card(); ?>
+		if ( '' !== $lic ) {
+			echo '<div class="swg-inline-notice swg-inline-notice--ok">' . esc_html( $lic ) . '</div>';
+		}
+		if ( 'saved' === $notice ) {
+			echo '<div class="swg-inline-notice swg-inline-notice--ok">Změny byly uloženy.</div>';
+		}
+	}
 
-				<?php if ( ! $operational ) : ?>
-					<div class="swg-inline-notice swg-inline-notice--warn">
-						Plugin nemá platnou licenci. Galerie na webu zůstává funkční, ale administrace je <strong>jen pro čtení</strong> – kategorie, subkategorie ani fotky nelze měnit, dokud licenci neobnovíte.
-					</div>
-				<?php endif; ?>
+	/** Upozornění na read-only režim s odkazem na stránku Licence. */
+	private function render_readonly_notice( $what ) {
+		?>
+		<div class="swg-inline-notice swg-inline-notice--warn">
+			Plugin nemá platnou licenci. Galerie na webu zůstává funkční, ale <?php echo esc_html( $what ); ?> je <strong>jen pro čtení</strong>, dokud licenci neobnovíte.
+			<?php if ( current_user_can( SWG_CAP_ADMIN ) ) : ?>
+				<a href="<?php echo esc_url( self::page_url( self::PAGE_LICENCE ) ); ?>">Přejít na licenci</a>
+			<?php else : ?>
+				Obraťte se prosím na administrátora webu.
+			<?php endif; ?>
+		</div>
+		<?php
+	}
 
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="swg-form">
-					<input type="hidden" name="action" value="swg_save">
-					<?php wp_nonce_field( 'swg_save', 'swg_nonce' ); ?>
-					<input type="hidden" name="swg_data" id="swg-data-json" value="">
+	/* ---------- Správa fotogalerií ---------- */
+
+	public function render_gallery_page() {
+		$operational = SWG_Licence::instance()->is_operational();
+		$this->open_page();
+
+		if ( ! $operational ) {
+			$this->render_readonly_notice( 'správa galerií' );
+		}
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="swg-form">
+			<input type="hidden" name="action" value="swg_save">
+			<?php wp_nonce_field( 'swg_save', 'swg_nonce' ); ?>
+			<input type="hidden" name="swg_data" id="swg-data-json" value="">
+
+			<div class="swg-toolbar">
+				<div class="swg-toolbar-left">
+					<?php if ( $operational ) : ?>
+						<input type="text" id="swg-new-cat" class="swg-input" placeholder="Název nové kategorie">
+						<button type="button" class="button swg-btn" id="swg-add-cat">+ Přidat kategorii</button>
+					<?php endif; ?>
+				</div>
+				<div class="swg-toolbar-right">
+					<button type="button" class="button swg-btn swg-btn-ghost" id="swg-expand-all">Rozbalit vše</button>
+					<button type="button" class="button swg-btn swg-btn-ghost" id="swg-collapse-all">Sbalit vše</button>
+					<?php if ( $operational ) : ?>
+						<button type="submit" class="button button-primary swg-btn-save">Uložit změny</button>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<div id="swg-editor" class="swg-editor<?php echo $operational ? '' : ' is-readonly'; ?>">
+				<!-- vykresluje admin.js -->
+			</div>
+
+			<?php if ( $operational ) : ?>
+				<div class="swg-footer-save">
+					<button type="submit" class="button button-primary swg-btn-save">Uložit změny</button>
+				</div>
+			<?php endif; ?>
+		</form>
+
+		<div class="swg-help">
+			<h2>Jak na vložení</h2>
+			<p>Celou galerii (všechny kategorie) vložíte shortcodem <code>[sw_gallery]</code>.</p>
+			<p>Jen jednu kategorii vložíte pomocí jejího shortcode – najdete ho u dané kategorie po rozbalení, včetně tlačítka pro rychlé zkopírování.</p>
+			<p>V klasickém editoru příspěvku můžete galerii vložit i tlačítkem <strong>Fotogalerie</strong> vedle „Přidat médium".</p>
+		</div>
+		<?php
+		$this->close_page();
+	}
+
+	/* ---------- Nastavení ---------- */
+
+	public function render_settings_page() {
+		$operational   = SWG_Licence::instance()->is_operational();
+		$data          = SWG_Data::get();
+		$st            = $data['settings'];
+		$color         = $st['color'];
+		$color_enabled = ( '' !== $color );
+		$disabled      = ( ! $operational );
+
+		$this->open_page();
+
+		if ( ! $operational ) {
+			$this->render_readonly_notice( 'nastavení' );
+		}
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="swg-settings-form">
+			<input type="hidden" name="action" value="swg_save_settings">
+			<?php wp_nonce_field( 'swg_save_settings', 'swg_nonce' ); ?>
 
 					<div class="swg-card swg-card--color<?php echo $color_enabled ? '' : ' is-off'; ?>" id="swg-color-card">
 						<div class="swg-card-head">
@@ -370,37 +503,21 @@ class SWG_Admin {
 						</div>
 					</div>
 
-					<?php if ( $operational ) : ?>
-						<div class="swg-toolbar">
-							<div class="swg-toolbar-left">
-								<input type="text" id="swg-new-cat" class="swg-input" placeholder="Název nové kategorie">
-								<button type="button" class="button swg-btn" id="swg-add-cat">+ Přidat kategorii</button>
-							</div>
-							<button type="submit" class="button button-primary swg-btn-save">Uložit změny</button>
-						</div>
-					<?php endif; ?>
-
-					<div id="swg-editor" class="swg-editor<?php echo $operational ? '' : ' is-readonly'; ?>">
-						<!-- vykresluje admin.js -->
-					</div>
-
-					<?php if ( $operational ) : ?>
-						<div class="swg-footer-save">
-							<button type="submit" class="button button-primary swg-btn-save">Uložit změny</button>
-						</div>
-					<?php endif; ?>
-				</form>
-
-				<div class="swg-help">
-					<h2>Jak na vložení</h2>
-					<p>Celou galerii (všechny kategorie) vložíte shortcodem <code>[sw_gallery]</code>.</p>
-					<p>Jen jednu kategorii vložíte pomocí jejího shortcode – najdete ho přímo u dané kategorie výše, včetně tlačítka pro rychlé zkopírování.</p>
-					<p>V klasickém editoru příspěvku můžete galerii vložit i tlačítkem <strong>Fotogalerie</strong> vedle „Přidat médium“.</p>
+			<?php if ( $operational ) : ?>
+				<div class="swg-footer-save">
+					<button type="submit" class="button button-primary swg-btn-save">Uložit nastavení</button>
 				</div>
-
-			</div>
-
-		</div>
+			<?php endif; ?>
+		</form>
 		<?php
+		$this->close_page();
+	}
+
+	/* ---------- Licence ---------- */
+
+	public function render_licence_page() {
+		$this->open_page();
+		SWG_Licence::instance()->render_card();
+		$this->close_page();
 	}
 }

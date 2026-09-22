@@ -24,6 +24,43 @@
 		return n + ' ' + (i18n.photos5 || 'fotek');
 	}
 
+	function subLabel(n) {
+		if (n === 1) { return n + ' subkategorie'; }
+		if (n >= 2 && n <= 4) { return n + ' subkategorie'; }
+		return n + ' subkategorií';
+	}
+
+	/* ---------- Sbalené / rozbalené kategorie ----------
+	   Výchozí stav je sbaleno. Rozbalené kategorie si pamatujeme v sessionStorage,
+	   aby po uložení (přesměrování) nezaklaply všechny zpátky. */
+
+	var OPEN_KEY = 'swg_open_cats';
+	var openCats = {};
+	try {
+		(JSON.parse(window.sessionStorage.getItem(OPEN_KEY) || '[]') || []).forEach(function (id) { openCats[id] = true; });
+	} catch (e) { openCats = {}; }
+
+	function saveOpen() {
+		try { window.sessionStorage.setItem(OPEN_KEY, JSON.stringify(Object.keys(openCats))); } catch (e) {}
+	}
+
+	function setOpen($cat, open) {
+		var id = String($cat.data('id'));
+		$cat.toggleClass('is-collapsed', !open);
+		$cat.find('> .swg-cat-head .swg-cat-toggle')
+			.attr('aria-expanded', open ? 'true' : 'false')
+			.attr('title', open ? (i18n.collapse || 'Sbalit') : (i18n.expand || 'Rozbalit'));
+		if (open) { openCats[id] = true; } else { delete openCats[id]; }
+		saveOpen();
+	}
+
+	/** Souhrn v hlavičce – ať je i u sbalené kategorie vidět, co v ní je. */
+	function updateCatMeta($cat) {
+		var $subs = $cat.find('.swg-subs-list > .swg-sub-card');
+		var photos = $cat.find('.swg-photos > .swg-photo').length;
+		$cat.find('> .swg-cat-head .swg-cat-meta').text(subLabel($subs.length) + ' · ' + countLabel(photos));
+	}
+
 	function thumbUrl(id) {
 		return thumbs[id] || '';
 	}
@@ -104,26 +141,30 @@
 
 	function lockEditor() {
 		// Tlačítko kopírování shortcode je jen ke čtení, i v read-only režimu má zůstat funkční.
-		$editor.find('input, textarea, button').not('.swg-cat-sc-copy').prop('disabled', true);
+		$editor.find('input, textarea, button').not('.swg-cat-sc-copy, .swg-cat-toggle').prop('disabled', true);
 	}
 
 	function renderCategory(cat) {
 		var $cat = $(
-			'<div class="swg-cat-card" data-id="' + cat.id + '">' +
+			'<div class="swg-cat-card is-collapsed" data-id="' + cat.id + '">' +
 				'<div class="swg-cat-head">' +
 					'<span class="swg-drag dashicons dashicons-menu" title="Přetáhni pro řazení"></span>' +
 					'<input type="text" class="swg-cat-title" value="" />' +
+					'<span class="swg-cat-meta"></span>' +
 					'<div class="swg-cat-actions">' +
 						'<button type="button" class="button swg-add-sub">+ Subkategorie</button>' +
 						'<button type="button" class="button swg-icon-btn swg-del-cat" title="Smazat kategorii"><span class="dashicons dashicons-trash"></span></button>' +
+						'<button type="button" class="button swg-icon-btn swg-cat-toggle" aria-expanded="false" aria-controls="swg-body-' + cat.id + '" title="' + (i18n.expand || 'Rozbalit') + '"><span class="dashicons dashicons-arrow-down-alt2"></span></button>' +
 					'</div>' +
 				'</div>' +
-				'<div class="swg-cat-sc-row">' +
-					'<span class="swg-cat-sc-label">Shortcode:</span>' +
-					'<code class="swg-cat-sc-code"></code>' +
-					'<button type="button" class="button swg-icon-btn swg-cat-sc-copy" title="Kopírovat shortcode"><span class="dashicons dashicons-admin-page"></span></button>' +
+				'<div class="swg-cat-body" id="swg-body-' + cat.id + '">' +
+					'<div class="swg-cat-sc-row">' +
+						'<span class="swg-cat-sc-label">Shortcode:</span>' +
+						'<code class="swg-cat-sc-code"></code>' +
+						'<button type="button" class="button swg-icon-btn swg-cat-sc-copy" title="Kopírovat shortcode"><span class="dashicons dashicons-admin-page"></span></button>' +
+					'</div>' +
+					'<div class="swg-subs-list"></div>' +
 				'</div>' +
-				'<div class="swg-subs-list"></div>' +
 			'</div>'
 		);
 
@@ -134,6 +175,9 @@
 		(cat.subcategories || []).forEach(function (sub) {
 			$list.append(renderSub(sub));
 		});
+
+		updateCatMeta($cat);
+		if (openCats[String(cat.id)]) { setOpen($cat, true); }
 
 		return $cat;
 	}
@@ -214,6 +258,7 @@
 	function sync() {
 		data = readData();
 		$json.val(JSON.stringify(data));
+		$editor.children('.swg-cat-card').each(function () { updateCatMeta($(this)); });
 	}
 
 	/* ---------- Sortable ---------- */
@@ -254,7 +299,10 @@
 			return;
 		}
 		data = readData();
-		data.categories.push({ id: uid('cat'), title: title, subcategories: [] });
+		var newId = uid('cat');
+		data.categories.push({ id: newId, title: title, subcategories: [] });
+		openCats[newId] = true;
+		saveOpen();
 		$('#swg-new-cat').val('');
 		render();
 	});
@@ -277,15 +325,39 @@
 		sync();
 		var $sub = renderSub({ id: uid('sub'), title: title, photos: [] });
 		$cat.find('.swg-subs-list').append($sub);
+		setOpen($cat, true);
 		bindSortables();
 		sync();
+	});
+
+	// Rozbalení / sbalení kategorie.
+	$editor.on('click', '.swg-cat-toggle', function () {
+		var $cat = $(this).closest('.swg-cat-card');
+		setOpen($cat, $cat.hasClass('is-collapsed'));
+	});
+
+	// Klik do volného místa hlavičky funguje taky (ne na název, tlačítka ani úchyt).
+	$editor.on('click', '.swg-cat-head', function (e) {
+		if ($(e.target).closest('input, button, .swg-drag').length) { return; }
+		var $cat = $(this).closest('.swg-cat-card');
+		setOpen($cat, $cat.hasClass('is-collapsed'));
+	});
+
+	$('#swg-expand-all').on('click', function () {
+		$editor.children('.swg-cat-card').each(function () { setOpen($(this), true); });
+	});
+	$('#swg-collapse-all').on('click', function () {
+		$editor.children('.swg-cat-card').each(function () { setOpen($(this), false); });
 	});
 
 	// Delete category.
 	$editor.on('click', '.swg-del-cat', function () {
 		if (readonly) { return; }
 		if (!window.confirm(i18n.confirmCat || 'Smazat kategorii?')) { return; }
-		$(this).closest('.swg-cat-card').remove();
+		var $gone = $(this).closest('.swg-cat-card');
+		delete openCats[String($gone.data('id'))];
+		saveOpen();
+		$gone.remove();
 		sync();
 		if (!$editor.children('.swg-cat-card').length) { render(); }
 	});
@@ -386,7 +458,10 @@
 	$('#swg-form').on('submit', sync);
 
 	/* ---------- Init ---------- */
-	render();
+	// Editor je jen na stránce Správa fotogalerií; v Nastavení běží jen barevný nástroj.
+	if ($editor.length) {
+		render();
+	}
 
 	/* ---------- Barevnost galerie ----------
 	   Odvození barev musí odpovídat PHP třídě SWG_Color. Když se mění vzoreček

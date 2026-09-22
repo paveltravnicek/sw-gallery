@@ -238,24 +238,24 @@ class SWG_Licence {
 	/* ---------- Admin akce (samostatná licence) ---------- */
 
 	public function handle_verify() {
-		if ( ! current_user_can( SWG_CAP ) ) {
+		if ( ! current_user_can( SWG_CAP_ADMIN ) ) {
 			wp_die( 'Zakázáno.', 'Zakázáno', array( 'response' => 403 ) );
 		}
 		check_admin_referer( 'swg_verify_license' );
 		$key = sanitize_text_field( (string) ( $_POST['license_key'] ?? '' ) );
 		$r   = $this->refresh( 'manual', $key );
 		$msg = ! empty( $r['message'] ) ? (string) $r['message'] : ( ! empty( $r['ok'] ) ? 'Licence byla ověřena.' : 'Licenci se nepodařilo ověřit.' );
-		wp_safe_redirect( add_query_arg( 'swg_license_message', rawurlencode( $msg ), admin_url( 'admin.php?page=sw-gallery' ) ) );
+		wp_safe_redirect( add_query_arg( 'swg_license_message', rawurlencode( $msg ), admin_url( 'admin.php?page=sw-gallery-licence' ) ) );
 		exit;
 	}
 
 	public function handle_remove() {
-		if ( ! current_user_can( SWG_CAP ) ) {
+		if ( ! current_user_can( SWG_CAP_ADMIN ) ) {
 			wp_die( 'Zakázáno.', 'Zakázáno', array( 'response' => 403 ) );
 		}
 		check_admin_referer( 'swg_remove_license' );
 		delete_option( self::OPTION );
-		wp_safe_redirect( add_query_arg( 'swg_license_message', rawurlencode( 'Licenční kód byl odebrán.' ), admin_url( 'admin.php?page=sw-gallery' ) ) );
+		wp_safe_redirect( add_query_arg( 'swg_license_message', rawurlencode( 'Licenční kód byl odebrán.' ), admin_url( 'admin.php?page=sw-gallery-licence' ) ) );
 		exit;
 	}
 
