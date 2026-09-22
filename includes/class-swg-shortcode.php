@@ -141,9 +141,6 @@ class SWG_Shortcode {
 
 					<?php foreach ( $subs as $si => $sub ) : ?>
 						<div class="swg-panel<?php echo 0 === $si ? ' is-active' : ''; ?>" data-sub="<?php echo esc_attr( $sub['slug'] ); ?>">
-							<?php if ( $single_sub ) : ?>
-								<h3 class="swg-panel-title"><?php echo esc_html( $sub['title'] ); ?></h3>
-							<?php endif; ?>
 							<div class="swg-grid">
 								<?php foreach ( $sub['photos'] as $pid ) : ?>
 									<?php echo $this->render_item( $pid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

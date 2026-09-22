@@ -154,11 +154,6 @@
 .swg-panel { display: none; }
 .swg-panel.is-active { display: block; }
 
-.swg-panel-title {
-	text-align: center;
-	margin: 0 0 1.5rem;
-}
-
 .swg-grid {
 	display: flex;
 	flex-wrap: wrap;

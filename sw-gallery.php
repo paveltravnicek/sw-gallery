@@ -3,7 +3,7 @@
  * Plugin Name:       Fotogalerie
  * Plugin URI:        https://smart-websites.cz/
  * Description:       Designová fotogalerie s kategoriemi, subkategoriemi a vlastním lightboxem. Vkládá se shortcodem [sw_gallery].
- * Version:           1.4
+ * Version:           1.4.1
  * Requires PHP:      7.4
  * Author:            Smart Websites
  * Author URI:        https://smart-websites.cz/
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SWG_VERSION', '1.4' );
+define( 'SWG_VERSION', '1.4.1' );
 define( 'SWG_FILE', __FILE__ );
 define( 'SWG_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SWG_URL', plugin_dir_url( __FILE__ ) );
