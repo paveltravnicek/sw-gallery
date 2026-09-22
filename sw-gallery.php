@@ -26,18 +26,19 @@ define( 'SWG_URL', plugin_dir_url( __FILE__ ) );
 define( 'SWG_OPTION', 'swg_gallery' );
 
 /**
- * Capability potřebná pro práci s administrací pluginu.
- * 'upload_files' mají ve výchozím nastavení WP role administrator, editor i author
- * (na rozdíl od contributor/subscriber) – galerie stejně pracuje s knihovnou médií,
+ * Capability pro Správu fotogalerií – Redaktor (Author) a výš.
+ * 'upload_files' má Administrátor, Šéfredaktor i Redaktor, ale ne Spolupracovník
+ * (Contributor) ani Návštěvník – galerie stejně pracuje s knihovnou médií,
  * takže je to přirozená hranice přístupu.
  */
 define( 'SWG_CAP', 'upload_files' );
 
 /**
- * Capability pro Nastavení a Licenci. Barevnost a licenční kód jsou věc
- * administrátora webu, ne autora, který jen spravuje fotky.
+ * Capability pro Nastavení a Licenci – Šéfredaktor (Editor) a výš.
+ * 'edit_others_posts' je oprávnění, které má Šéfredaktor, ale Redaktor (Author)
+ * už ne, takže přesně odděluje „spravuje fotky" od „smí měnit vzhled a licenci".
  */
-define( 'SWG_CAP_ADMIN', 'manage_options' );
+define( 'SWG_CAP_ADMIN', 'edit_others_posts' );
 
 require_once SWG_DIR . 'includes/class-swg-color.php';
 require_once SWG_DIR . 'includes/class-swg-data.php';
